@@ -12,7 +12,7 @@ Feel free to report errors.
 - Dump PKG/TEX info
 
 ### Commands
-- help - shows those commands, use `help "extract"` and `help "info"` to see options for them
+- help - shows those commands, use `help "extract"`, `help "pack"` and `help "info"` to see options for them
 - extract - extracts specified PKG/TEX file, or files from folder
 ```
 -o, --output          (Default: ./output) Output directory
@@ -25,6 +25,11 @@ Feel free to report errors.
 -c, --copyproject     Copy project.json and preview.jpg from beside PKG into output directory
 -n, --usename         Use name from project.json as project subfolder name instead of id
 --no-tex-convert      Don't convert TEX files into images while extracting PKG
+--overwrite           Overwrite all existing files
+```
+- pack - packs a PNG image into a TEX file
+```
+-o, --output          (Default: ./output) Output directory
 --overwrite           Overwrite all existing files
 ```
 - info - Dumps PKG/TEX info
@@ -53,4 +58,8 @@ repkg extract -e tex -s -o ./output E:\Games\steamapps\workshop\content\123
 Convert all TEX files to images from specific folder
 ```
 repkg extract -t -s E:\path\to\dir\with\tex\files
+```
+Pack a PNG file into a tex file
+```
+repkg pack "image.png" -o "output"
 ```
