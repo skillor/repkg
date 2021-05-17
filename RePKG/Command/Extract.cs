@@ -22,6 +22,7 @@ namespace RePKG.Command
         private static string[] _onlyExtArray;
         private static readonly string[] ProjectFiles = {"project.json"};
 
+        // private static readonly ITexWriter _texWriter;
         private static readonly ITexReader _texReader;
         private static readonly ITexJsonInfoGenerator _texJsonInfoGenerator;
         private static readonly IPackageReader _packageReader;
@@ -29,6 +30,7 @@ namespace RePKG.Command
 
         static Extract()
         {
+            // _texWriter = TexWriter.Default;
             _texReader = TexReader.Default;
             _texJsonInfoGenerator = new TexJsonInfoGenerator();
             _texToImageConverter = new TexToImageConverter();
@@ -73,7 +75,7 @@ namespace RePKG.Command
             }
 
             ExtractFile(fileInfo);
-            Console.WriteLine("Done");
+            Console.WriteLine("Done Extracting");
         }
 
         private static string[] NormalizeExtensions(string[] array)
@@ -163,10 +165,27 @@ namespace RePKG.Command
                 if (tex == null)
                     return;
 
+                // Own Code to save tex edited
+                // Console.WriteLine("I am Hackerman");
+
+                // var filePath2 = Path.Combine(_options.OutputDirectory, Path.GetFileNameWithoutExtension(fileInfo.Name));
+                // using (var stream = File.OpenWrite($"{filePath2}-test.tex"))
+                // using (var writer = new BinaryWriter(stream))
+                // {
+                //     _texWriter.WriteTo(writer, tex);
+                // }
+
                 try
                 {
                     var filePath = Path.Combine(_options.OutputDirectory,
                         Path.GetFileNameWithoutExtension(fileInfo.Name));
+
+                    var fullJsonInfo = _texJsonInfoGenerator.GenerateFullInfo(tex);
+                    File.WriteAllText($"{filePath}.tex-full-json", fullJsonInfo);
+
+                    if (_options.OnlyFullJson) {
+                        return;
+                    }
 
                     ConvertToImageAndSave(tex, filePath, _options.Overwrite);
                     var jsonInfo = _texJsonInfoGenerator.GenerateInfo(tex);
@@ -363,14 +382,31 @@ namespace RePKG.Command
         private static void ConvertToImageAndSave(ITex tex, string path, bool overwrite)
         {
             var format = _texToImageConverter.GetConvertedFormat(tex);
-            var outputPath = $"{path}.{format.GetFileExtension()}";
 
-            if (!overwrite && File.Exists(outputPath))
-                return;
-            
-            var resultImage = _texToImageConverter.ConvertToImage(tex);
 
-            File.WriteAllBytes(outputPath, resultImage.Bytes);
+            int i = 0;
+            foreach (var image in tex.ImagesContainer.Images) {
+                int j = 0;
+                foreach (var mipmap in image.Mipmaps) {
+                    var outputPath = $"{path}-im{i}-mipmap{j}.{format.GetFileExtension()}";
+                    if (i == 0 && j == 0) {
+                        outputPath = $"{path}.{format.GetFileExtension()}";
+                    }
+
+                    if (!overwrite && File.Exists(outputPath))
+                        return;
+                    
+                    var resultImage = _texToImageConverter.ConvertToImage(tex, mipmap);
+
+                    File.WriteAllBytes(outputPath, resultImage.Bytes);
+
+                    if (!_options.ExtractAllImages) {
+                        return;
+                    }
+                    j++;
+                }
+                i++;
+            }
         }
     }
 
@@ -387,6 +423,12 @@ namespace RePKG.Command
 
         [Option('e', "onlyexts", HelpText = "Only extract files with specified extensions (delimited by comma \",\")")]
         public string OnlyExts { get; set; }
+
+        [Option('j', "onlyfulljson", HelpText = "Only extract full json of file")]
+        public bool OnlyFullJson { get; set; }
+
+        [Option('a', "allimages", HelpText = "Extract all images")]
+        public bool ExtractAllImages { get; set; }
 
         [Option('t', "tex", HelpText = "Convert all tex files into images from specified directory in input")]
         public bool TexDirectory { get; set; }

@@ -12,14 +12,13 @@ namespace RePKG.Application.Texture
 {
     public class TexToImageConverter
     {
-        public ImageResult ConvertToImage(ITex tex)
+        public ImageResult ConvertToImage(ITex tex, ITexMipmap sourceMipmap)
         {
             if (tex == null) throw new ArgumentNullException(nameof(tex));
             
             if (tex.IsGif)
                 return ConvertToGif(tex);
 
-            var sourceMipmap = tex.FirstImage.FirstMipmap;
             var format = sourceMipmap.Format;
 
             if (format.IsCompressed())
